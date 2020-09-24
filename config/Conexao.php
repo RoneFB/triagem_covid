@@ -9,7 +9,7 @@ class Conexao
   
    public static function getConnection() {
        try {
-          $connection = new PDO('mysql:host=192.168.1.102; dbname=triagem_covid', "root", "", 
+          $connection = new PDO('mysql:host=192.168.1.102; dbname=triagem_covid', "alltec", "alltec", 
             array(
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, 
                 PDO::ATTR_PERSISTENT => false,
