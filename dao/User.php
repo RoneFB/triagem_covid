@@ -24,3 +24,24 @@ function getAllUsers(){
         echo ($e);
     }
 }
+
+
+function findUserByName($name){
+    try{
+        $conn = Conexao::getConnection();
+        $select = $conn->query('SELECT * FROM USUARIO WHERE USU_NOME = '.$name);   
+        echo json_encode($select->fetch());
+    }catch(PDOException $e){
+        echo ($e);
+    }
+}
+
+function findUserByMatricula($matricula){
+    try{
+        $conn = Conexao::getConnection();
+        $select = $conn->query('SELECT * FROM USUARIO WHERE USU_MATRICULA = '.$matricula);   
+        echo json_encode($select->fetch());
+    }catch(PDOException $e){
+        echo ($e);
+    }
+}

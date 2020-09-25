@@ -107,13 +107,15 @@ function formCreate(){
             var btnEnviar = $.parseHTML("<button class='btn btn-success'>Enviar Triagem</button>")
 
             $(btnEnviar).click(()=>{
-                
+                var idUsuario = $("#id").val();
+                var matricula = $("matricula").val();
+
                 if(verificarRespostas(questions) == true){
                     $.ajax({
                         method: "POST",
-                        dataType: 'JSON',
+                        dataType: 'HTML',
                         url: "controller/AnswerController.php",
-                        data: {"perguntas": questions}
+                        data: {"perguntas": questions, "idUsuario" : parseInt(idUsuario)}
                     }).done((data) => {
                         console.log(data)
                     }).fail((jqXHR, status, msg) => {
@@ -180,18 +182,42 @@ Instascan.Camera.getCameras().then(cameras => {
         scanner.mirror = false;
         scanner.start(cameras[1])
         scanner.addListener('scan', content => {
-    
-
             var nomeJson = JSON.parse(content).nome
             var matriculaJson = JSON.parse(content).matricula
             $("#webcam").remove();
-            $("#nome").val(nomeJson);
-            $("#matricula").val(matriculaJson);
-            $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Nome: ${nomeJson}</h3>`))
-            $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Matricula: ${matriculaJson}</h3>`))
+            
             scanner.stop(cameras[1])
+
+            $.ajax({
+                method: "GET",
+                dataType: 'JSON',
+                url: "controller/UserController.php?VerifyUser=1",
+                data: {"nome": nomeJson, "matricula": matriculaJson}
+            }).done((data) => {
+                $("#id").val(data.USU_ID);
+                $("#nome").val(data.USU_NOME);
+                $("#matricula").val(data.USU_MATRICULA);
+                $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Nome: ${data.USU_NOME}</h3>`))
+                $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Matricula: ${data.USU_MATRICULA}</h3>`))
+            }).fail((jqXHR, status, msg) => {
+                console.warn(msg)
+            })
         })
     }
 }).catch(function (e) {
     console.error(e);
   });
+
+
+function verificarUsuario($nome, matricula){
+    $.ajax({
+        method: "GET",
+        dataType: 'HTML',
+        url: "controller/UserController.php?VerifyUser=1",
+        data: {"nome": nome, "matricula": matricula}
+    }).done((data) => {
+        console.log(data)
+    }).fail((jqXHR, status, msg) => {
+        console.warn(msg)
+    })
+}

@@ -16,3 +16,7 @@ if(isset($_POST['nome'])){
 if(isset($_GET['getUsuarios'])){
     print_r(getAllUsers());
 }
+if(isset($_GET['VerifyUser'])){
+    $matricula = $_GET['matricula'];
+    print_r(findUserByMatricula($matricula));
+}

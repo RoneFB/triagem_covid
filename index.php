@@ -11,6 +11,7 @@
     <div id="app">
         <div id="qrcod" class="card">
           <video id="webcam"></video>
+          <input type="hidden" name="id" id="id">
           <input type="hidden" name="nome" id="nome">
           <input type="hidden" name="matricula" id="matricula">
           <div class="card-body">
