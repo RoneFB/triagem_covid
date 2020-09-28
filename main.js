@@ -1,4 +1,80 @@
 
+formCreate();
+
+/* qrcode */
+var visit = false;
+const scanner = new Instascan.Scanner({
+    video: document.getElementById('webcam')
+})
+
+Instascan.Camera.getCameras().then(cameras => {
+    console.log(cameras)
+    if(cameras.length > 0){
+        scanner.mirror = false;
+        scanner.start(cameras[1])
+        scanner.addListener('scan', content => {
+            var nomeJson = JSON.parse(content).nome
+            var matriculaJson = JSON.parse(content).matricula
+            $("#webcam").remove();
+            
+            scanner.stop(cameras[1])
+
+            getUser(nomeJson, matriculaJson)
+        })
+    }
+}).catch(function (e) {
+    console.error(e);
+  });
+
+
+  $("#semQRCODE").on('click', function(){
+      
+      $("#qrcod").append($.parseHTML(`<div class="dropdown">
+        <div id="inputDropDown" class="dropdown-content">
+        <input type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction()">
+        
+    </div>`));
+        $.ajax({
+            method: "GET",
+            dataType: 'json',
+            url: "./controller/UserController.php?getUsuarios=1",
+        }).done((data) => {
+            data.forEach(element => {
+                console.log(element)
+                let usuElement = $.parseHTML(`<a id='${element.USU_ID}'>${element.USU_NOME} - ${element.USU_MATRICULA}</a>`);
+                $(usuElement).on('click', () => {
+                    document.getElementById("myInput").value = element.USU_NOME + " - " + element.USU_MATRICULA;
+                    getUser(element.USU_NOME, element.USU_MATRICULA);
+                    document.getElementById("inputDropDown").classList.toggle("hidden");
+                });
+                $("#inputDropDown").append(usuElement);
+            });
+            
+        }).fail((jqXHR, status, msg) => {
+            console.warn(msg)
+        })
+        document.getElementById("inputDropDown").classList.toggle("show");
+  })
+
+
+
+
+function filterFunction() {
+        var input, filter, ul, li, a, i;
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+        div = document.getElementById("inputDropDown");
+        a = div.getElementsByTagName("a");
+        for (i = 0; i < a.length; i++) {
+          txtValue = a[i].textContent || a[i].innerText;
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            a[i].style.display = "";
+          } else {
+            a[i].style.display = "none";
+          }
+        }
+      }
+
 function formCreate(){
 
     var questions = [
@@ -62,13 +138,13 @@ function formCreate(){
         if (question.id == 1) $(navElement).addClass("active");
       
         $(navElement).on('click', () => {
-            trocarView(question.id)
+            trocarView("ques-"+question.id)
             $(navElement).addClass("active");
         })
         $('.tab').append(navElement)
 
         /* Content */
-        let contentElement = $.parseHTML(` <div id="${question.id}" class="tabcontent display1">
+        let contentElement = $.parseHTML(` <div id="ques-${question.id}" class="tabcontent display1">
             <h3>${question.question}</h3></div>`);
 
         if (question.id == 1) $(contentElement).css("display", "block")
@@ -101,23 +177,32 @@ function formCreate(){
             $(contentElement).prepend($.parseHTML(`<h3>Você apresentou este sintomas nas ultimas 24 Horas ?</h3>`))
         }
 
-
+    
+        var idUsuario = $("#id").val();
+        urlPost = "controller/AnswerController.php";
+        dataPost = {"perguntas": questions, "idUsuario" : parseInt(idUsuario)}
+      
         /* Enviar para o Banco de Dados */
         if(question.id === 10){
             var btnEnviar = $.parseHTML("<button class='btn btn-success'>Enviar Triagem</button>")
-
+           
+            var nome = $("#nome").val();
+            var urlPost = "";
+          
             $(btnEnviar).click(()=>{
-                var idUsuario = $("#id").val();
-                var matricula = $("matricula").val();
-
+                if($("#chkVisitante").is(":checked")){
+                    urlPost = "controller/VisitanteController.php";
+                    dataPost = {"perguntas": questions, "nome" : $("#nome").val(), "matricula": $("#matricula").val()}
+                }
+           
                 if(verificarRespostas(questions) == true){
                     $.ajax({
                         method: "POST",
                         dataType: 'HTML',
-                        url: "controller/AnswerController.php",
-                        data: {"perguntas": questions, "idUsuario" : parseInt(idUsuario)}
+                        url: urlPost,
+                        data: dataPost
                     }).done((data) => {
-                        console.log(data)
+                        location.reload();
                     }).fail((jqXHR, status, msg) => {
                         console.warn(msg)
                     })
@@ -132,6 +217,54 @@ function formCreate(){
 
 }
 
+
+$("#chkVisitante").on('click',  function(){
+    var inputNome = $("#nome");
+    var inputMatricula= $("#matricula");
+    if($("#chkVisitante").is(":checked")){
+        $("#webcam").addClass("hidden");
+        $( "#lblNome" ).removeClass( "invisible" )
+        $( "#lblMatricula" ).removeClass( "invisible" )
+        $(inputNome).prop('type', 'text');
+        $(inputMatricula).prop('type', 'text');
+    }else{
+         $("#webcam").removeClass("hidden");
+         $( "#lblNome" ).addClass( "invisible" )
+         $( "#lblMatricula" ).addClass( "invisible" )
+         $(inputNome).prop('type', 'hidden');
+        $(inputMatricula).prop('type', 'hidden');
+    }
+   
+    
+   
+
+    var btnEnviarVisitante = $.parseHTML(`<button class="btn btn-success">Enviar Visitante</button>`)
+    
+    $(btnEnviarVisitante).click(function(){
+        addVisitante($(inputNome).val(),$(inputMatricula).val())
+    })
+
+    $('#qrcode').append(btnEnviarVisitante)
+
+  
+    
+})
+function getUser(nomeJson, matriculaJson){
+    $.ajax({
+        method: "GET",
+        dataType: 'json',
+        url: "controller/UserController.php?VerifyUser=1",
+        data: {"nome": nomeJson, "matricula": matriculaJson}
+    }).done((data) => {
+        $("#id").val(data.USU_ID);
+        $("#nome").val(data.USU_NOME);
+        $("#matricula").val(data.USU_MATRICULA);
+        $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Nome: ${data.USU_NOME}</h3>`))
+        $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Matricula: ${data.USU_MATRICULA}</h3>`))
+    }).fail((jqXHR, status, msg) => {
+        console.warn(msg)
+    })
+}
 function verificarRespostas(questions){
     $(".alert").remove();
     var questionsNull = []
@@ -168,46 +301,6 @@ function trocarView(element) {
 
     }
 
-formCreate();
-
-/* qrcode */
-
-const scanner = new Instascan.Scanner({
-    video: document.getElementById('webcam')
-})
-
-Instascan.Camera.getCameras().then(cameras => {
-    console.log(cameras)
-    if(cameras.length > 0){
-        scanner.mirror = false;
-        scanner.start(cameras[1])
-        scanner.addListener('scan', content => {
-            var nomeJson = JSON.parse(content).nome
-            var matriculaJson = JSON.parse(content).matricula
-            $("#webcam").remove();
-            
-            scanner.stop(cameras[1])
-
-            $.ajax({
-                method: "GET",
-                dataType: 'JSON',
-                url: "controller/UserController.php?VerifyUser=1",
-                data: {"nome": nomeJson, "matricula": matriculaJson}
-            }).done((data) => {
-                $("#id").val(data.USU_ID);
-                $("#nome").val(data.USU_NOME);
-                $("#matricula").val(data.USU_MATRICULA);
-                $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Nome: ${data.USU_NOME}</h3>`))
-                $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Matricula: ${data.USU_MATRICULA}</h3>`))
-            }).fail((jqXHR, status, msg) => {
-                console.warn(msg)
-            })
-        })
-    }
-}).catch(function (e) {
-    console.error(e);
-  });
-
 
 function verificarUsuario($nome, matricula){
     $.ajax({
@@ -218,6 +311,9 @@ function verificarUsuario($nome, matricula){
     }).done((data) => {
         console.log(data)
     }).fail((jqXHR, status, msg) => {
-        console.warn(msg)
+        console.log(msg)
     })
 }
+
+
+
