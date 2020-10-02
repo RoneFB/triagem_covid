@@ -17,7 +17,19 @@ require_once '../config/Conexao.php';
             }
             
         }catch(PDOException $e){
-            echo $e;
+            echo json_encode($e);
         }
         /*Registra Respostas da Triagem */
+    }
+
+    function findAnswerByMatricula($matricula){
+        try{
+            $conn = Conexao::getConnection();
+            $stmt = $conn->prepare("SELECT count(*) as qtd_registro FROM TRIAGEM TRI INNER JOIN USUARIO USU ON TRI.TRI_USU_ID = USU.USU_ID 
+            WHERE  CAST(TRI.TRI_DATA AS DATE) = CAST(CURRENT_DATE() AS DATE) AND USU_MATRICULA = :matricula");
+            $stmt->execute(['matricula' => $matricula]); 
+            echo json_encode($stmt->fetch());
+        }catch(PDOException $e){
+            echo (json_encode($e));
+        }
     }

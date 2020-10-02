@@ -29,19 +29,21 @@ function getAllUsers(){
 function findUserByName($name){
     try{
         $conn = Conexao::getConnection();
-        $select = $conn->query('SELECT * FROM USUARIO WHERE USU_NOME = '.$name);   
-        echo json_encode($select->fetch());
+        $stmt = $conn->prepare("SELECT * FROM USUARIO WHERE USU_NOME=:nome");
+        $stmt->execute(['nome' => $name]); 
+        echo json_encode($stmt->fetch());
     }catch(PDOException $e){
-        echo ($e);
+        echo (json_encode($e));
     }
 }
 
 function findUserByMatricula($matricula){
     try{
         $conn = Conexao::getConnection();
-        $select = $conn->query('SELECT * FROM USUARIO WHERE USU_MATRICULA = '.$matricula);   
-        echo json_encode($select->fetch());
+        $stmt = $conn->prepare("SELECT * FROM USUARIO WHERE USU_MATRICULA=:matricula");
+        $stmt->execute(['matricula' => $matricula]); 
+        echo json_encode($stmt->fetch());
     }catch(PDOException $e){
-        echo ($e);
+        echo (json_encode($e));
     }
 }

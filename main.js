@@ -13,6 +13,7 @@ Instascan.Camera.getCameras().then(cameras => {
         scanner.mirror = false;
         scanner.start(cameras[1])
         scanner.addListener('scan', content => {
+            console.log(content)
             var nomeJson = JSON.parse(content).nome
             var matriculaJson = JSON.parse(content).matricula
             $("#webcam").remove();
@@ -28,7 +29,7 @@ Instascan.Camera.getCameras().then(cameras => {
 
 
   $("#semQRCODE").on('click', function(){
-      
+      $('.dropdown').remove();
       $("#qrcod").append($.parseHTML(`<div class="dropdown">
         <div id="inputDropDown" class="dropdown-content">
         <input type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction()">
@@ -39,8 +40,8 @@ Instascan.Camera.getCameras().then(cameras => {
             dataType: 'json',
             url: "./controller/UserController.php?getUsuarios=1",
         }).done((data) => {
+            console.log(data)
             data.forEach(element => {
-                console.log(element)
                 let usuElement = $.parseHTML(`<a id='${element.USU_ID}'>${element.USU_NOME} - ${element.USU_MATRICULA}</a>`);
                 $(usuElement).on('click', () => {
                     document.getElementById("myInput").value = element.USU_NOME + " - " + element.USU_MATRICULA;
@@ -81,59 +82,59 @@ function formCreate(){
         {
             id: 1,
             question : "Você teve contato próximo com alguma pessoa testada positiva para COVID-19 nos últimos 14 dias ?",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 2,
             question : "Febre",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 3,
             question : "Calafrios",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 4,
             question : "Falta de ar",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 5,
             question : "Tosse",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 6,
             question : "Dor de garganta",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 7,
             question : "Dor de cabeça",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 8,
             question : "Dor no corpo",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 9,
             question : "Perda de olfato e/ou paladar",
-            answer : ""
+            answer : "Não"
         },
         {
             id: 10,
             question : "Diarreia(por motivo desconhecido)",
-            answer : ""
+            answer : "Não"
         }
     ]
     
 
     questions.forEach(question => {
         /* NavBar */
-        let navElement = $.parseHTML(`<button class="tablinks">Pergunta ${question.id}</button>`)
+        let navElement = $.parseHTML(`<button class="tablinks">${question.question}</button>`)
        
         if (question.id == 1) $(navElement).addClass("active");
       
@@ -142,7 +143,7 @@ function formCreate(){
             $(navElement).addClass("active");
         })
         $('.tab').append(navElement)
-
+        $(navElement).css('background-color', "rgb(88, 104, 252)")
         /* Content */
         let contentElement = $.parseHTML(` <div id="ques-${question.id}" class="tabcontent display1">
             <h3>${question.question}</h3></div>`);
@@ -158,7 +159,7 @@ function formCreate(){
         let form = $.parseHTML(`
         <div class="form-check-inline" id="radio-${question.id}">
             <div class="form-check form-check-inline">
-                <input type="radio" class="form-check-input" name="opt-${question.id}" value="Não">Não
+                <input type="radio" class="form-check-input" name="opt-${question.id}" value="Não" checked>Não
             </div>
             <div class="form-check form-check-inline">
                 <input type="radio" class="form-check-input" name="opt-${question.id}" value="Sim">Sim
@@ -178,18 +179,20 @@ function formCreate(){
         }
 
     
-        var idUsuario = $("#id").val();
-        urlPost = "controller/AnswerController.php";
-        dataPost = {"perguntas": questions, "idUsuario" : parseInt(idUsuario)}
+        
       
         /* Enviar para o Banco de Dados */
-        if(question.id === 10){
-            var btnEnviar = $.parseHTML("<button class='btn btn-success'>Enviar Triagem</button>")
+      
+            let btnEnviar = $.parseHTML("<button class='btn btn-success'>Enviar Triagem</button>")
            
             var nome = $("#nome").val();
             var urlPost = "";
           
             $(btnEnviar).click(()=>{
+                var idUsuario = $("#id").val();
+                urlPost = "controller/AnswerController.php";
+                dataPost = {"perguntas": questions, "idUsuario" : parseInt(idUsuario)}
+
                 if($("#chkVisitante").is(":checked")){
                     urlPost = "controller/VisitanteController.php";
                     dataPost = {"perguntas": questions, "nome" : $("#nome").val(), "matricula": $("#matricula").val()}
@@ -198,18 +201,19 @@ function formCreate(){
                 if(verificarRespostas(questions) == true){
                     $.ajax({
                         method: "POST",
-                        dataType: 'HTML',
+                        dataType: 'json',
                         url: urlPost,
                         data: dataPost
                     }).done((data) => {
-                        location.reload();
+                        console.log(data)
+                         location.reload();
                     }).fail((jqXHR, status, msg) => {
-                        console.warn(msg)
+                         location.reload();
                     })
                 }
             })
             $(form).append(btnEnviar)
-        }
+        
 
         $(contentElement).append(form);
      
@@ -234,9 +238,6 @@ $("#chkVisitante").on('click',  function(){
          $(inputNome).prop('type', 'hidden');
         $(inputMatricula).prop('type', 'hidden');
     }
-   
-    
-   
 
     var btnEnviarVisitante = $.parseHTML(`<button class="btn btn-success">Enviar Visitante</button>`)
     
@@ -250,20 +251,41 @@ $("#chkVisitante").on('click',  function(){
     
 })
 function getUser(nomeJson, matriculaJson){
-    $.ajax({
+    $('.lbl-info-user').remove()
+     $.ajax({
         method: "GET",
         dataType: 'json',
-        url: "controller/UserController.php?VerifyUser=1",
+        url: "controller/AnswerController.php?VerifyCadastro=1",
         data: {"nome": nomeJson, "matricula": matriculaJson}
-    }).done((data) => {
-        $("#id").val(data.USU_ID);
-        $("#nome").val(data.USU_NOME);
-        $("#matricula").val(data.USU_MATRICULA);
-        $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Nome: ${data.USU_NOME}</h3>`))
-        $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4">Matricula: ${data.USU_MATRICULA}</h3>`))
+    }).done((verificaCadastro) => {
+        console.log(verificaCadastro)
+        if(verificaCadastro['qtd_registro'] == 0){
+            $.ajax({
+            method: "GET",
+                dataType: 'json',
+                url: "controller/UserController.php?VerifyUser=1",
+                data: {"nome": nomeJson, "matricula": matriculaJson}
+            }).done((data) => {
+
+                console.log(data)
+                $("#id").val(data.USU_ID);
+                $("#nome").val(data.USU_NOME);
+                $("#matricula").val(data.USU_MATRICULA);
+                $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4 lbl-info-user">Nome: ${data.USU_NOME}</h3>`))
+                $("#qrcod .card-body").append($.parseHTML(`<h3 class="mt-4 lbl-info-user">Matricula: ${data.USU_MATRICULA}</h3>`))
+            }).fail((jqXHR, status, msg) => {
+                console.warn(msg)
+            })
+        }else{
+            alert("Já foi feita a triagem dessa pessoa") 
+            location.reload()
+        }
+      
     }).fail((jqXHR, status, msg) => {
-        console.warn(msg)
+        console.log(msg)
     })
+
+    
 }
 function verificarRespostas(questions){
     $(".alert").remove();
@@ -274,7 +296,6 @@ function verificarRespostas(questions){
             $("#10").append($.parseHTML(`<div class='alert alert-danger'>Atenção a pergunta ${question.id} não foi respondida!</div>`))
         }
     })
-    console.log(questionsNull.length == 0)
    return questionsNull.length == 0
    
 }
@@ -316,4 +337,6 @@ function verificarUsuario($nome, matricula){
 }
 
 
-
+function removeWebCam(){
+    $("#webcam").addClass("hidden");
+}

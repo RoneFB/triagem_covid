@@ -8,9 +8,9 @@
         }).done((data) => {
             data.forEach(element => {
                 console.log(element)
-                let usuElement = $.parseHTML(`<a id='${element.USU_ID}'>${element.USU_NOME} - ${element.USU_MATRICULA}</a>`);
+                let usuElement = $.parseHTML(`<a id='${element.USU_ID}'>${element.USU_NOME} | ${element.USU_MATRICULA}</a>`);
                 $(usuElement).on('click', () => {
-                    document.getElementById("myInput").value = element.USU_NOME + " - " + element.USU_MATRICULA;
+                    document.getElementById("myInput").value = element.USU_NOME + " | " + element.USU_MATRICULA;
                     
                 });
                 $("#myDropdown").append(usuElement);
@@ -45,22 +45,22 @@
     
     function createQrCode()
     {
-        var qrElement =  $("#myInput").val().split(" - ");
+        var qrElement =  $("#myInput").val().split(" | ");
       
         var userInput = qrElement[0];
         var matriculaInput = qrElement[1];
-
+        var idInput = matriculaInput.replace(/\s/g, '');
         $('.qrcode').append($.parseHTML(`
 
             <div class="card border-dark mb-3 col-md-4" style="max-width: 18rem;">
                 <div class="card-header">TRIAGEM COVID - ALLTEC</div>
                 <div class="card-body text-dark">
-                    <div id="qrcode-${matriculaInput}"></div>
+                    <div id="qrcode-${idInput}"></div>
                 </div>
-                <div class="card-footer" id="footer-${matriculaInput}"></div>
+                <div class="card-footer" id="footer-${idInput}"></div>
             </div>
         `))
-        var qrcode = new QRCode("qrcode-"+matriculaInput, {
+        var qrcode = new QRCode("qrcode-"+idInput, {
             text: '{"nome":'+ '"'+userInput + '",\n' + '"matricula":'+'"'+matriculaInput+'"}',
             width: 128,
             height: 128,
@@ -68,7 +68,7 @@
             colorLight: "white",
             correctLevel : QRCode.CorrectLevel.H
         });
-        $('#footer-'+matriculaInput).append($.parseHTML(`<span>Nome: ${userInput}<span>
+        $('#footer-'+idInput).append($.parseHTML(`<span>Nome: ${userInput}<span>
             <span>Matricula: ${matriculaInput}</span>`))
 
         $("input").val(""); 

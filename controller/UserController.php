@@ -18,5 +18,6 @@ if(isset($_GET['getUsuarios'])){
 }
 if(isset($_GET['VerifyUser'])){
     $matricula = $_GET['matricula'];
-    print_r(findUserByMatricula($matricula));
+    
+    findUserByMatricula($matricula);
 }

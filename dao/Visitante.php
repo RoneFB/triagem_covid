@@ -21,7 +21,7 @@ require_once '../config/Conexao.php';
             }
             
         }catch(PDOException $e){
-            echo $e;
+            echo json_encode($e);
         }
         /*Registra Respostas da Triagem */
     }
